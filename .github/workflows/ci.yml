@@ -21,7 +21,7 @@ jobs:
     name: backend (PHP 8.5 · CS Fixer · PHPStan · PHPUnit)
     # MySQL 을 docker run 으로 직접 띄우고 잡 종료 시 정리한다
     # (여러 저장소가 러너를 공유해 고정 포트 대신 임의 포트를 배정받는다).
-    runs-on: [self-hosted, Linux, X64]
+    runs-on: [self-hosted, Linux, X64, docker]
 
     steps:
       - name: Checkout
@@ -111,7 +111,7 @@ jobs:
 
   frontapi:
     name: frontapi (pure PHP · PHPStan · PHPUnit)
-    runs-on: [self-hosted, Linux, X64]
+    runs-on: [self-hosted, Linux, X64, docker]
 
     defaults:
       run:
