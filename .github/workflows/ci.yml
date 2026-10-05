@@ -42,7 +42,12 @@ jobs:
             -e MYSQL_ROOT_PASSWORD=root \
             -e MYSQL_DATABASE=aicura_test \
             --network ci-net-backend-${{ github.run_id }} \
-            mysql:8.0
+            --tmpfs /var/lib/mysql \
+            mysql:8.0 \
+            --innodb-flush-log-at-trx-commit=0 \
+            --innodb-flush-method=nosync \
+            --sync-binlog=0 \
+            --innodb-redo-log-capacity=536870912
           echo "CI_MYSQL_HOST=ci-mysql-backend-${{ github.run_id }}" >> "$GITHUB_ENV"
           for i in $(seq 1 30); do
             docker exec ci-mysql-backend-${{ github.run_id }} mysqladmin ping -proot --silent && break
@@ -180,7 +185,12 @@ jobs:
             -e MYSQL_ROOT_PASSWORD=root \
             -e MYSQL_DATABASE=ailicet \
             --network ci-net-frontapi-${{ github.run_id }} \
-            mysql:8.0
+            --tmpfs /var/lib/mysql \
+            mysql:8.0 \
+            --innodb-flush-log-at-trx-commit=0 \
+            --innodb-flush-method=nosync \
+            --sync-binlog=0 \
+            --innodb-redo-log-capacity=536870912
           echo "CI_MYSQL_HOST=ci-mysql-frontapi-${{ github.run_id }}" >> "$GITHUB_ENV"
           for i in $(seq 1 30); do
             docker exec ci-mysql-frontapi-${{ github.run_id }} mysqladmin ping -proot --silent && break
