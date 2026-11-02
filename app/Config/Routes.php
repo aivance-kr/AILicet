@@ -5,6 +5,10 @@ use CodeIgniter\Router\RouteCollection;
 /** @var RouteCollection $routes */
 // 루트 접속 시 서비스 소개 페이지(로그인 버튼 포함)
 $routes->get('/', 'Home::index');
+// SEO/GEO 크롤러용 공개 텍스트
+$routes->get('robots.txt', 'SeoController::robots');
+$routes->get('sitemap.xml', 'SeoController::sitemap');
+$routes->get('llms.txt', 'SeoController::llms');
 
 // ── 고객 자가가입 (공개) ──
 $routes->get('signup', 'Client\SignupController::showSignup');
