@@ -1,4 +1,8 @@
 <?php
+
+use App\Libraries\Seo\JsonLdBuilder;
+use App\Libraries\Seo\LandingContent;
+
 /**
  * 서비스 소개(랜딩) 페이지.
  *
@@ -6,22 +10,33 @@
  */
 $ctaHref  = $loggedIn ? '/admin' : '/admin/login';
 $ctaLabel = $loggedIn ? '콘솔로 이동' : '로그인';
-$features = [
-    ['title' => '노드락 라이선스', 'body' => 'Ed25519 서명 파일을 배포하면 클라이언트가 공개키로 오프라인 검증합니다. 호스트ID 바인딩으로 무단 복제를 차단합니다.'],
-    ['title' => '플로팅 라이선스', 'body' => '관리키만 배포하고 온라인으로 활성화·유효성 확인·사용량 차감을 처리합니다. 이중 활성화는 자동 차단됩니다.'],
-    ['title' => '역할별 콘솔', 'body' => '운영자·대행사·고객이 각자의 소유권 범위 안에서 발급, 조회, 연장, 정지, 재발급을 수행합니다.'],
-    ['title' => '자동화·알림', 'body' => '만료 알림, 자동 종료, 부정사용 감지를 배치로 처리하고 Slack으로 통보합니다.'],
-    ['title' => 'AI 업무 지원', 'body' => '수집 로그 분류·요약, 이상 사용 탐지, 고객 문의 답변 초안까지. 최종 확정은 항상 사람이 합니다.'],
-    ['title' => '감사 추적', 'body' => '모든 발급·상태 변경 이력을 기록해 언제든 누가 무엇을 했는지 되짚을 수 있습니다.'],
-];
+$features  = LandingContent::features();
+$faqs      = LandingContent::faqs();
+$jsonLd    = (new JsonLdBuilder())->landingJson();
+$canonical = base_url('/');
+$ogImage   = base_url('apple-touch-icon.png');
 ?>
 <!doctype html>
 <html lang="ko">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>AILicet · 라이선스 인증·관리 서비스</title>
-    <meta name="description" content="AILicet은 온·오프라인을 아우르는 라이선스 발급·인증·관리 서비스입니다.">
+    <title><?= esc(LandingContent::TITLE) ?></title>
+    <meta name="description" content="<?= esc(LandingContent::DESCRIPTION, 'attr') ?>">
+    <link rel="canonical" href="<?= esc($canonical, 'attr') ?>">
+    <meta name="robots" content="index,follow,max-image-preview:large">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="AILicet">
+    <meta property="og:locale" content="ko_KR">
+    <meta property="og:title" content="<?= esc(LandingContent::TITLE, 'attr') ?>">
+    <meta property="og:description" content="<?= esc(LandingContent::DESCRIPTION, 'attr') ?>">
+    <meta property="og:url" content="<?= esc($canonical, 'attr') ?>">
+    <meta property="og:image" content="<?= esc($ogImage, 'attr') ?>">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="<?= esc(LandingContent::TITLE, 'attr') ?>">
+    <meta name="twitter:description" content="<?= esc(LandingContent::DESCRIPTION, 'attr') ?>">
+    <meta name="twitter:image" content="<?= esc($ogImage, 'attr') ?>">
+    <script type="application/ld+json"><?= $jsonLd ?></script>
     <link rel="icon" type="image/svg+xml" href="<?= base_url('favicon.svg') ?>">
     <link rel="alternate icon" href="<?= base_url('favicon.ico') ?>">
     <link rel="apple-touch-icon" href="<?= base_url('apple-touch-icon.png') ?>">
@@ -40,6 +55,9 @@ $features = [
         .landing-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:16px; margin-top:28px; }
         .landing-grid .card__body h3 { margin:0 0 8px; font-size:16px; color:var(--color-primary); }
         .landing-grid .card__body p { margin:0; font-size:14px; color:var(--color-text-muted); line-height:1.6; }
+        .landing-faq details { border-bottom:1px solid var(--color-border); padding:14px 0; }
+        .landing-faq summary { cursor:pointer; font-weight:600; }
+        .landing-faq p { margin:8px 0 0; font-size:14px; color:var(--color-text-muted); line-height:1.6; }
         .landing-foot { text-align:center; padding:28px 24px; color:var(--color-text-muted); font-size:13px; border-top:1px solid var(--color-border); }
     </style>
 </head>
@@ -71,6 +89,15 @@ $features = [
             </div>
         <?php endforeach; ?>
     </div>
+    <section class="landing-faq" id="faq" style="margin-top:56px">
+        <h2>자주 묻는 질문</h2>
+        <?php foreach ($faqs as $faq): ?>
+            <details>
+                <summary><?= esc($faq['q']) ?></summary>
+                <p><?= esc($faq['a']) ?></p>
+            </details>
+        <?php endforeach; ?>
+    </section>
 </main>
 
 <footer class="landing-foot">© AIvance · AILicet</footer>
