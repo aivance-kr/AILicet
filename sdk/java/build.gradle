@@ -1,0 +1,23 @@
+plugins {
+    id 'java-library'
+}
+
+group = 'kr.aivance'
+version = '0.1.0'
+
+java {
+    toolchain { languageVersion = JavaLanguageVersion.of(17) } // Ed25519 은 JDK 15+ 내장
+}
+
+repositories { mavenCentral() }
+
+dependencies {
+    implementation 'com.google.code.gson:gson:2.11.0'
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.3'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+test {
+    useJUnitPlatform()
+    systemProperty 'fixtures', file('../testdata').absolutePath
+}
