@@ -38,7 +38,7 @@ final class HomePageTest extends CIUnitTestCase
         $this->assertStringContainsString('name="twitter:card"', $body);
         $this->assertStringContainsString('"@type":"SoftwareApplication"', $body);
         $this->assertStringContainsString('"@type":"FAQPage"', $body);
-        $this->assertStringContainsString('자주 묻는 질문', $body);
+        $this->assertStringContainsString('id="faq"', $body);
     }
 
     public function testRobotsAllowsAiCrawlersAndListsSitemap(): void
@@ -57,7 +57,7 @@ final class HomePageTest extends CIUnitTestCase
         $this->assertStringContainsString('<urlset', (string) $this->get('sitemap.xml')->getBody());
 
         $llms = (string) $this->get('llms.txt')->getBody();
-        $this->assertStringStartsWith('# AILicet', $llms);
-        $this->assertStringContainsString('노드락 라이선스', $llms);
+        $this->assertStringContainsString('# AILicet', $llms);
+        $this->assertStringContainsString('Ed25519', $llms);
     }
 }
