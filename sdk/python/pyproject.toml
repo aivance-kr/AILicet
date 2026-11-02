@@ -1,0 +1,19 @@
+[project]
+name = "ailicet"
+version = "0.1.0"
+description = "AILicet 노드락 라이선스 검증 SDK"
+requires-python = ">=3.10"
+dependencies = ["PyNaCl>=1.5"]
+
+[project.optional-dependencies]
+test = ["pytest"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["ailicet"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]

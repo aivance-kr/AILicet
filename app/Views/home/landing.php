@@ -15,6 +15,34 @@ $faqs      = LandingContent::faqs();
 $jsonLd    = (new JsonLdBuilder())->landingJson();
 $canonical = base_url('/');
 $ogImage   = base_url('apple-touch-icon.png');
+
+$steps = [
+    ['title' => '상품·모듈 등록', 'body' => '운영자가 상품 코드, 모듈, 기간 정책, 사용량 한도를 정의합니다.'],
+    ['title' => '라이선스 발급', 'body' => '노드락은 호스트ID에 바인딩된 서명 파일을, 플로팅은 관리키를 발급합니다.'],
+    ['title' => '클라이언트 인증', 'body' => '노드락은 내장 공개키로 오프라인 검증, 플로팅은 frontapi로 활성화·유효성 확인을 수행합니다.'],
+    ['title' => '사용량·감사 기록', 'body' => '분석 시작·종료 시 사용량을 차감하고 모든 요청과 상태 변경을 로그로 남깁니다.'],
+    ['title' => '만료·부정사용 대응', 'body' => '배치가 만료 알림과 자동 종료, 부정사용 감지를 처리하고 Slack으로 알립니다.'],
+];
+$plans = [
+    ['name' => '노드락', 'tag' => '오프라인 설치형', 'items' => ['Ed25519 서명 파일 발급', '호스트ID 바인딩', '오프라인 검증', '재발급 지원']],
+    ['name' => '플로팅', 'tag' => '온라인 동시 사용형', 'items' => ['관리키 기반 활성화', '유효성·사용량 실시간 확인', '이중 활성화 차단', '카운트·크레딧 차감'], 'featured' => true],
+    ['name' => '엔터프라이즈', 'tag' => '맞춤 구성', 'items' => ['노드락·플로팅 혼합 운영', '대행사 계층 구조', '전용 지원 및 SLA', '연동 개발 지원']],
+];
+$tools = [
+    ['title' => '라이선스 콘솔', 'body' => '운영자·대행사·고객 포털에서 발급, 연장, 정지, 재발급, 이력 조회를 수행합니다.'],
+    ['title' => 'frontapi (REST)', 'body' => '활성화, 유효성, 사용량 차감, 로그 수집 엔드포인트를 JWT Bearer로 제공합니다.'],
+    ['title' => 'Swagger 문서', 'body' => '/api/docs 에서 OpenAPI 스펙을 확인하고 바로 호출해 볼 수 있습니다.'],
+    ['title' => '키 생성 CLI', 'body' => 'php spark license:keygen 으로 서명 키 쌍을 생성합니다.'],
+    ['title' => '일일 배치', 'body' => '만료 알림, 자동 종료, 부정사용 감지를 일 단위로 실행합니다.'],
+    ['title' => 'AI 로그 도구', 'body' => '로그 분류, 감사 로그 설명, 고객 문의 답변 초안을 생성합니다.'],
+];
+$sdks = [
+    ['lang' => 'PHP', 'status' => '제공', 'body' => 'LicenseVerifier 참조 구현. 공개키로 NLicense.lic 서명을 검증합니다.'],
+    ['lang' => 'Python', 'status' => '제공', 'body' => 'PyNaCl 기반. pip로 설치해 verify_license_file() 한 번으로 검증합니다.'],
+    ['lang' => 'Java', 'status' => '제공', 'body' => 'JDK 17 내장 Ed25519 사용. 외부 암호 라이브러리가 필요 없습니다.'],
+    ['lang' => 'C++', 'status' => '제공', 'body' => 'libsodium 기반. CMake 라이브러리로 앱에 정적 연결합니다.'],
+    ['lang' => 'C#', 'status' => '제공', 'body' => '.NET 8, BouncyCastle 기반 순수 관리 코드 구현입니다.'],
+];
 ?>
 <!doctype html>
 <html lang="ko">
@@ -55,6 +83,23 @@ $ogImage   = base_url('apple-touch-icon.png');
         .landing-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:16px; margin-top:28px; }
         .landing-grid .card__body h3 { margin:0 0 8px; font-size:16px; color:var(--color-primary); }
         .landing-grid .card__body p { margin:0; font-size:14px; color:var(--color-text-muted); line-height:1.6; }
+        .landing-section--alt { max-width:none; background:var(--color-surface); border-top:1px solid var(--color-border); border-bottom:1px solid var(--color-border); }
+        .landing-section--alt > .landing-inner { max-width:1080px; margin:0 auto; padding:64px 24px; }
+        .landing-steps { counter-reset:step; display:grid; grid-template-columns:repeat(auto-fit, minmax(190px, 1fr)); gap:16px; margin-top:28px; }
+        .landing-step { position:relative; padding:20px 16px 16px; border:1px solid var(--color-border); border-radius:var(--radius-sm, 8px); background:var(--color-bg); }
+        .landing-step::before { counter-increment:step; content:counter(step); display:inline-flex; align-items:center; justify-content:center; width:28px; height:28px; border-radius:50%; background:var(--color-primary); color:#fff; font-weight:700; font-size:14px; margin-bottom:10px; }
+        .landing-step h3 { margin:0 0 6px; font-size:15px; }
+        .landing-step p { margin:0; font-size:13px; line-height:1.6; color:var(--color-text-muted); }
+        .landing-plan { display:flex; flex-direction:column; }
+        .landing-plan.is-featured { border:2px solid var(--color-secondary); }
+        .landing-plan .tag { color:var(--color-text-muted); font-size:13px; margin:0 0 12px; }
+        .landing-plan .price { font-size:22px; font-weight:700; margin:0 0 14px; }
+        .landing-plan ul { margin:0 0 16px; padding-left:18px; font-size:14px; line-height:1.8; color:var(--color-text-muted); }
+        .landing-sdk { display:flex; flex-wrap:wrap; gap:12px; margin-top:28px; }
+        .landing-sdk .card { flex:1 1 180px; }
+        .landing-sdk .status { font-size:12px; font-weight:600; color:var(--color-text-soft); }
+        .landing-sdk .status.is-live { color:var(--color-success); }
+        .landing-code { margin-top:20px; padding:16px; background:#0F1F1A; color:#D7EFE6; border-radius:8px; font-size:13px; line-height:1.6; overflow-x:auto; }
         .landing-faq details { border-bottom:1px solid var(--color-border); padding:14px 0; }
         .landing-faq summary { cursor:pointer; font-weight:600; }
         .landing-faq p { margin:8px 0 0; font-size:14px; color:var(--color-text-muted); line-height:1.6; }
@@ -76,20 +121,89 @@ $ogImage   = base_url('apple-touch-icon.png');
     </div>
 </header>
 
-<main class="landing-section">
-    <h2>주요 기능</h2>
-    <p class="muted">발급부터 검증, 운영 자동화까지 라이선스 수명주기 전체를 다룹니다.</p>
-    <div class="landing-grid">
-        <?php foreach ($features as $feature): ?>
-            <div class="card">
-                <div class="card__body">
+<main>
+    <section class="landing-section" id="features">
+        <h2>주요 기능</h2>
+        <p class="muted">발급부터 검증, 운영 자동화까지 라이선스 수명주기 전체를 다룹니다.</p>
+        <div class="landing-grid">
+            <?php foreach ($features as $feature): ?>
+                <div class="card"><div class="card__body">
                     <h3><?= esc($feature['title']) ?></h3>
                     <p><?= esc($feature['body']) ?></p>
-                </div>
+                </div></div>
+            <?php endforeach; ?>
+        </div>
+    </section>
+
+    <section class="landing-section--alt" id="process">
+        <div class="landing-inner">
+            <h2>라이선스 프로세스</h2>
+            <p class="muted">상품 등록에서 부정사용 대응까지, 다섯 단계로 운영됩니다.</p>
+            <div class="landing-steps">
+                <?php foreach ($steps as $step): ?>
+                    <div class="landing-step">
+                        <h3><?= esc($step['title']) ?></h3>
+                        <p><?= esc($step['body']) ?></p>
+                    </div>
+                <?php endforeach; ?>
             </div>
-        <?php endforeach; ?>
-    </div>
-    <section class="landing-faq" id="faq" style="margin-top:56px">
+        </div>
+    </section>
+
+    <section class="landing-section" id="pricing">
+        <h2>가격정책</h2>
+        <p class="muted">라이선스 유형별로 구성합니다. 상세 요금은 문의해 주세요.</p>
+        <div class="landing-grid">
+            <?php foreach ($plans as $plan): ?>
+                <div class="card landing-plan<?= ! empty($plan['featured']) ? ' is-featured' : '' ?>"><div class="card__body">
+                    <h3><?= esc($plan['name']) ?></h3>
+                    <p class="tag"><?= esc($plan['tag']) ?></p>
+                    <p class="price">문의</p>
+                    <ul>
+                        <?php foreach ($plan['items'] as $item): ?>
+                            <li><?= esc($item) ?></li>
+                        <?php endforeach; ?>
+                    </ul>
+                </div></div>
+            <?php endforeach; ?>
+        </div>
+    </section>
+
+    <section class="landing-section--alt" id="tools">
+        <div class="landing-inner">
+            <h2>제공 도구</h2>
+            <p class="muted">콘솔, API, CLI, 배치까지 운영에 필요한 도구를 함께 제공합니다.</p>
+            <div class="landing-grid">
+                <?php foreach ($tools as $tool): ?>
+                    <div class="card"><div class="card__body">
+                        <h3><?= esc($tool['title']) ?></h3>
+                        <p><?= esc($tool['body']) ?></p>
+                    </div></div>
+                <?php endforeach; ?>
+            </div>
+        </div>
+    </section>
+
+    <section class="landing-section" id="sdk">
+        <h2>SDK</h2>
+        <p class="muted">클라이언트 프로그램에 내장해 라이선스 파일을 검증합니다. 모든 SDK는 같은 파일 포맷과 검증 순서를 따릅니다.</p>
+        <div class="landing-sdk">
+            <?php foreach ($sdks as $sdk): ?>
+                <div class="card"><div class="card__body">
+                    <h3><?= esc($sdk['lang']) ?></h3>
+                    <span class="status<?= $sdk['status'] === '제공' ? ' is-live' : '' ?>"><?= esc($sdk['status']) ?></span>
+                    <?php if ($sdk['body'] !== ''): ?>
+                        <p><?= esc($sdk['body']) ?></p>
+                    <?php endif; ?>
+                </div></div>
+            <?php endforeach; ?>
+        </div>
+        <pre class="landing-code"><code>$verifier = new LicenseVerifier($publicKeyBase64);
+$payload  = $verifier->verify(file_get_contents('NLicense.lic'));
+// 위조·변조 시 null, 통과 시 페이로드(host_id, expire_date, modules ...)</code></pre>
+    </section>
+
+    <section class="landing-faq landing-section" id="faq">
         <h2>자주 묻는 질문</h2>
         <?php foreach ($faqs as $faq): ?>
             <details>
