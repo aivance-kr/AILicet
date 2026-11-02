@@ -3,8 +3,8 @@
 use CodeIgniter\Router\RouteCollection;
 
 /** @var RouteCollection $routes */
-// 루트 접속 시 로그인 페이지로(로그인돼 있으면 로그인 화면이 다시 /admin 으로 보냄)
-$routes->get('/', static fn () => redirect()->to('/admin/login'));
+// 루트 접속 시 서비스 소개 페이지(로그인 버튼 포함)
+$routes->get('/', 'Home::index');
 
 // ── 고객 자가가입 (공개) ──
 $routes->get('signup', 'Client\SignupController::showSignup');
