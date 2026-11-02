@@ -37,10 +37,10 @@ $tools = [
 ];
 $sdks = [
     ['lang' => 'PHP', 'status' => '제공', 'body' => 'LicenseVerifier 참조 구현. 공개키로 NLicense.lic 서명을 검증합니다.'],
-    ['lang' => 'C++', 'status' => '준비 중', 'body' => ''],
-    ['lang' => 'C#', 'status' => '준비 중', 'body' => ''],
-    ['lang' => 'Python', 'status' => '준비 중', 'body' => ''],
-    ['lang' => 'Java', 'status' => '준비 중', 'body' => ''],
+    ['lang' => 'Python', 'status' => '제공', 'body' => 'PyNaCl 기반. pip로 설치해 verify_license_file() 한 번으로 검증합니다.'],
+    ['lang' => 'Java', 'status' => '제공', 'body' => 'JDK 17 내장 Ed25519 사용. 외부 암호 라이브러리가 필요 없습니다.'],
+    ['lang' => 'C++', 'status' => '제공', 'body' => 'libsodium 기반. CMake 라이브러리로 앱에 정적 연결합니다.'],
+    ['lang' => 'C#', 'status' => '제공', 'body' => '.NET 8, BouncyCastle 기반 순수 관리 코드 구현입니다.'],
 ];
 ?>
 <!doctype html>
@@ -168,7 +168,7 @@ $sdks = [
 
     <section class="landing-section" id="sdk">
         <h2>SDK</h2>
-        <p class="muted">클라이언트 프로그램에 내장해 라이선스 파일을 검증합니다. 언어별 SDK는 순차적으로 제공됩니다.</p>
+        <p class="muted">클라이언트 프로그램에 내장해 라이선스 파일을 검증합니다. 모든 SDK는 같은 파일 포맷과 검증 순서를 따릅니다.</p>
         <div class="landing-sdk">
             <?php foreach ($sdks as $sdk): ?>
                 <div class="card"><div class="card__body">
