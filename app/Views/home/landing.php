@@ -40,7 +40,7 @@ $sdks = [
     ['lang' => 'Python', 'status' => '제공', 'body' => 'PyNaCl 기반. pip로 설치해 verify_license_file() 한 번으로 검증합니다.'],
     ['lang' => 'Java', 'status' => '제공', 'body' => 'JDK 17 내장 Ed25519 사용. 외부 암호 라이브러리가 필요 없습니다.'],
     ['lang' => 'C++', 'status' => '제공', 'body' => 'libsodium 기반. CMake 라이브러리로 앱에 정적 연결합니다.'],
-    ['lang' => 'C#', 'status' => '베타', 'body' => '.NET 8, BouncyCastle 기반 순수 관리 코드 구현입니다.'],
+    ['lang' => 'C#', 'status' => '제공', 'body' => '.NET 8, BouncyCastle 기반 순수 관리 코드 구현입니다.'],
 ];
 ?>
 <!doctype html>

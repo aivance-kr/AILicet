@@ -8,7 +8,7 @@
 | Python | [`python/`](python) | PyNaCl | 테스트 통과 |
 | Java | [`java/`](java) | JDK 17 내장 Ed25519 (+Gson) | 테스트 통과 |
 | C++ | [`cpp/`](cpp) | libsodium (+nlohmann/json) | 테스트 통과 |
-| C# | [`csharp/`](csharp) | BouncyCastle | 작성 완료, 빌드 미검증(베타) |
+| C# | [`csharp/`](csharp) | BouncyCastle | 테스트 통과 |
 | PHP | [`frontapi/src/Support/LicenseVerifier.php`](../frontapi/src/Support/LicenseVerifier.php) | ext-sodium | 참조 구현 |
 
 ## 공통 API
