@@ -34,7 +34,13 @@ jobs:
           # ("Connection refused"). 실행별 전용 네트워크에 러너와 MySQL 을 같이 붙이고
           # 컨테이너 이름으로 접속한다 — 호스트 포트를 쓰지 않아 동시 잡끼리 겹치지 않는다.
           docker network create ci-net-backend-${{ github.run_id }}
-          docker network connect ci-net-backend-${{ github.run_id }} "$(hostname)"
+          # 러너가 컨테이너면 같은 네트워크에 붙여 컨테이너 이름으로 접속한다.
+          # 호스트에서 직접 도는 러너(hostname 이 컨테이너 이름이 아님)는 네트워크에 붙일 수 없으므로
+          # MySQL 컨테이너 IP 로 접속한다(호스트는 도커 브리지 IP 에 직접 닿는다).
+          if docker inspect --type container "$(hostname)" >/dev/null 2>&1; then
+            docker network connect ci-net-backend-${{ github.run_id }} "$(hostname)"
+            MYSQL_HOST=ci-mysql-backend-${{ github.run_id }}
+          fi
           # 여러 저장소가 self-hosted 러너를 공유해서 고정 포트를 쓰면
           # 다른 저장소의 CI 컨테이너와 충돌할 수 있다. 도커가 골라주는 임의의
           # 빈 호스트 포트를 쓰고, 실제 배정된 포트를 GITHUB_ENV 로 넘긴다.
@@ -48,7 +54,9 @@ jobs:
             --innodb-flush-method=nosync \
             --sync-binlog=0 \
             --innodb-redo-log-capacity=536870912
-          echo "CI_MYSQL_HOST=ci-mysql-backend-${{ github.run_id }}" >> "$GITHUB_ENV"
+          : "${MYSQL_HOST:=$(docker inspect -f '{{(index .NetworkSettings.Networks "ci-net-backend-${{ github.run_id }}").IPAddress}}' ci-mysql-backend-${{ github.run_id }})}"
+          [ -n "$MYSQL_HOST" ] || { echo "MySQL 호스트 확인 실패" >&2; exit 1; }
+          echo "CI_MYSQL_HOST=$MYSQL_HOST" >> "$GITHUB_ENV"
           for i in $(seq 1 30); do
             docker exec ci-mysql-backend-${{ github.run_id }} mysqladmin ping -proot --silent && break
             sleep 2
@@ -178,7 +186,13 @@ jobs:
           # ("Connection refused"). 실행별 전용 네트워크에 러너와 MySQL 을 같이 붙이고
           # 컨테이너 이름으로 접속한다 — 호스트 포트를 쓰지 않아 동시 잡끼리 겹치지 않는다.
           docker network create ci-net-frontapi-${{ github.run_id }}
-          docker network connect ci-net-frontapi-${{ github.run_id }} "$(hostname)"
+          # 러너가 컨테이너면 같은 네트워크에 붙여 컨테이너 이름으로 접속한다.
+          # 호스트에서 직접 도는 러너(hostname 이 컨테이너 이름이 아님)는 네트워크에 붙일 수 없으므로
+          # MySQL 컨테이너 IP 로 접속한다(호스트는 도커 브리지 IP 에 직접 닿는다).
+          if docker inspect --type container "$(hostname)" >/dev/null 2>&1; then
+            docker network connect ci-net-frontapi-${{ github.run_id }} "$(hostname)"
+            MYSQL_HOST=ci-mysql-frontapi-${{ github.run_id }}
+          fi
           # backend 잡·다른 저장소의 CI 와 동시에 돌 수 있어 고정 포트 대신
           # 도커가 골라주는 임의의 빈 호스트 포트를 쓴다.
           docker run -d --name ci-mysql-frontapi-${{ github.run_id }} \
@@ -191,7 +205,9 @@ jobs:
             --innodb-flush-method=nosync \
             --sync-binlog=0 \
             --innodb-redo-log-capacity=536870912
-          echo "CI_MYSQL_HOST=ci-mysql-frontapi-${{ github.run_id }}" >> "$GITHUB_ENV"
+          : "${MYSQL_HOST:=$(docker inspect -f '{{(index .NetworkSettings.Networks "ci-net-frontapi-${{ github.run_id }}").IPAddress}}' ci-mysql-frontapi-${{ github.run_id }})}"
+          [ -n "$MYSQL_HOST" ] || { echo "MySQL 호스트 확인 실패" >&2; exit 1; }
+          echo "CI_MYSQL_HOST=$MYSQL_HOST" >> "$GITHUB_ENV"
           for i in $(seq 1 30); do
             docker exec ci-mysql-frontapi-${{ github.run_id }} mysqladmin ping -proot --silent && break
             sleep 2

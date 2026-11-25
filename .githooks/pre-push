@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # 검증 게이트 — 로컬에서 끝낸다.
 #   - main 직접 push: 무조건 차단 (배포는 dev → main PR/merge commit 으로만)
-#   - dev push: composer ci(루트) + frontapi composer check 필수, 실패 시 push 중단
-#   - feature/* push: 빠른 반복을 막지 않기 위해 검증하지 않는다
+#   - 그 외 브랜치 push(feature/* 포함): composer ci(루트) + frontapi composer check 필수, 실패 시 push 중단
+#     feature → dev 는 Squash merge 로 CI 가 돌지 않으므로, PR 전 이 훅이 유일한 검증 지점이다
 #   - 문서 전용 변경(*.md, docs/**, .claude/rules/**): 비교 대상 코드가 없으므로 검증을 건너뛴다
 #   - PHP/Composer 미설치 환경: 검증을 건너뛰고 CI(main PR)에서 최종 검증
 # 긴급 우회: SKIP_HOOKS=1 git push ...
@@ -31,10 +31,6 @@ while read -r local_ref local_sha remote_ref remote_sha; do
         exit 1
     fi
 
-    if [ "$branch" != "dev" ]; then
-        continue
-    fi
-
     if ! command -v composer >/dev/null 2>&1; then
         echo "⚠️  composer 가 없어 로컬 검증을 건너뜁니다 (dev → main PR 의 CI 가 최종 검증합니다)." >&2
         continue
@@ -48,7 +44,7 @@ while read -r local_ref local_sha remote_ref remote_sha; do
         fi
     fi
 
-    echo "🔍 dev 푸시 전 로컬 검증 실행 (composer ci)..." >&2
+    echo "🔍 푸시 전 로컬 검증 실행 (composer ci)..." >&2
     ( cd "$repo_root" && composer ci )
 
     if [ -f "$repo_root/frontapi/composer.json" ]; then
