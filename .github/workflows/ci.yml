@@ -37,7 +37,7 @@ jobs:
           # 러너가 컨테이너면 같은 네트워크에 붙여 컨테이너 이름으로 접속한다.
           # 호스트에서 직접 도는 러너(hostname 이 컨테이너 이름이 아님)는 네트워크에 붙일 수 없으므로
           # MySQL 컨테이너 IP 로 접속한다(호스트는 도커 브리지 IP 에 직접 닿는다).
-          if docker inspect "$(hostname)" >/dev/null 2>&1; then
+          if docker inspect --type container "$(hostname)" >/dev/null 2>&1; then
             docker network connect ci-net-backend-${{ github.run_id }} "$(hostname)"
             MYSQL_HOST=ci-mysql-backend-${{ github.run_id }}
           fi
@@ -55,6 +55,7 @@ jobs:
             --sync-binlog=0 \
             --innodb-redo-log-capacity=536870912
           : "${MYSQL_HOST:=$(docker inspect -f '{{(index .NetworkSettings.Networks "ci-net-backend-${{ github.run_id }}").IPAddress}}' ci-mysql-backend-${{ github.run_id }})}"
+          [ -n "$MYSQL_HOST" ] || { echo "MySQL 호스트 확인 실패" >&2; exit 1; }
           echo "CI_MYSQL_HOST=$MYSQL_HOST" >> "$GITHUB_ENV"
           for i in $(seq 1 30); do
             docker exec ci-mysql-backend-${{ github.run_id }} mysqladmin ping -proot --silent && break
@@ -188,7 +189,7 @@ jobs:
           # 러너가 컨테이너면 같은 네트워크에 붙여 컨테이너 이름으로 접속한다.
           # 호스트에서 직접 도는 러너(hostname 이 컨테이너 이름이 아님)는 네트워크에 붙일 수 없으므로
           # MySQL 컨테이너 IP 로 접속한다(호스트는 도커 브리지 IP 에 직접 닿는다).
-          if docker inspect "$(hostname)" >/dev/null 2>&1; then
+          if docker inspect --type container "$(hostname)" >/dev/null 2>&1; then
             docker network connect ci-net-frontapi-${{ github.run_id }} "$(hostname)"
             MYSQL_HOST=ci-mysql-frontapi-${{ github.run_id }}
           fi
@@ -205,6 +206,7 @@ jobs:
             --sync-binlog=0 \
             --innodb-redo-log-capacity=536870912
           : "${MYSQL_HOST:=$(docker inspect -f '{{(index .NetworkSettings.Networks "ci-net-frontapi-${{ github.run_id }}").IPAddress}}' ci-mysql-frontapi-${{ github.run_id }})}"
+          [ -n "$MYSQL_HOST" ] || { echo "MySQL 호스트 확인 실패" >&2; exit 1; }
           echo "CI_MYSQL_HOST=$MYSQL_HOST" >> "$GITHUB_ENV"
           for i in $(seq 1 30); do
             docker exec ci-mysql-frontapi-${{ github.run_id }} mysqladmin ping -proot --silent && break
