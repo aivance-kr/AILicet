@@ -123,7 +123,7 @@ cd frontapi && composer check      # frontapi(pure PHP) — analyse + test
 3. `composer install --no-dev --optimize-autoloader`
 4. `php spark migrate --all -f` — 출력을 grep 검사해 예외 감지 시 `exit 1` 로 배포 중단
 5. `php spark cache:clear`
-6. `sudo -n systemctl reload apache2` — 아파치 리로드(무중단). OPcache 는 PHP-FPM 의 `opcache.validate_timestamps` 로 갱신된다
+6. `sudo -n systemctl reload apache2` + 실행 중인 `php*-fpm` 리로드 — 무중단, OPcache 갱신(FPM 리로드 실패는 경고만)
 
 > **spark migrate 함정**: DB 연결 실패·마이그레이션 예외가 나도 종료코드 0 을 반환한다. `set -e` 로 못 잡으므로 출력을 캡처해 예외 패턴(`[...Exception]`·`Unable to connect`·`Access denied`)을 직접 검사하고 실패 시 배포를 중단한다.
 
@@ -139,7 +139,7 @@ cd frontapi && composer check      # frontapi(pure PHP) — analyse + test
 
 - **GitHub 읽기전용 deploy key** — 서버 저장소 리모트를 SSH(`git@github.com:...`)로 설정 (HTTPS면 `could not read Username` 실패)
 - **프로덕션 `.env`** 에 실제 DB 접속정보 (없으면 migrate 시 `Access denied`)
-- **비밀번호 없는 sudo**: `/etc/sudoers.d/aicura-deploy` 에 `<DEPLOY_USER> ALL=(ALL) NOPASSWD: /usr/bin/systemctl reload apache2` (없으면 `sudo: a password is required` 로 실패)
+- **비밀번호 없는 sudo**: `/etc/sudoers.d/aicura-deploy` 에 `<DEPLOY_USER> ALL=(ALL) NOPASSWD: /usr/bin/systemctl reload apache2, /usr/bin/systemctl reload php8.5-fpm` (apache2 가 없으면 `sudo: a password is required` 로 실패)
 - 아파치 `DocumentRoot` 는 `public/`, `writable/` 는 아파치 유저(`www-data`) 쓰기 가능
 - **writable setgid 구성(권장)** — 소유권 충돌로 인한 chmod 실패를 근본 제거:
   ```bash
