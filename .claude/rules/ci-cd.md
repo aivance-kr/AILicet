@@ -114,7 +114,7 @@ cd frontapi && composer check      # frontapi(pure PHP) — analyse + test
 - **트리거**: `main` push + `workflow_dispatch`(수동·롤백, `ref` 입력)
 - **동시성**: `deploy-production` 그룹 — 배포 동시 실행 1개, `cancel-in-progress: false`
 - **러너**: `ci.yml` 과 동일하게 조직(`aivance-kr`) 레벨 self-hosted 러너(`[self-hosted, Linux, X64]`)에서 돈다. GitHub 호스팅 러너(`ubuntu-latest`)는 계정 결제/스펜딩 리밋 문제로 잡 자체가 시작되지 못한 사례(2026-07-30)가 있어 전환했다 — `appleboy/ssh-action` 은 러너에서 프로덕션 서버로 SSH 접속만 하므로 self-hosted 에서도 동일하게 동작한다.
-- **대상**: Ubuntu + mod_php 아파치 단일 서버 (`appleboy/ssh-action`)
+- **대상**: Ubuntu + 아파치 + PHP-FPM(`php8.5-fpm`) 단일 서버 (`appleboy/ssh-action`)
 
 ### 배포 절차 (`deploy.yml` 이 SSH 로 서버에서 자동 실행 — 수동 실행 시 동일 순서)
 
@@ -123,7 +123,7 @@ cd frontapi && composer check      # frontapi(pure PHP) — analyse + test
 3. `composer install --no-dev --optimize-autoloader`
 4. `php spark migrate --all -f` — 출력을 grep 검사해 예외 감지 시 `exit 1` 로 배포 중단
 5. `php spark cache:clear`
-6. `sudo -n systemctl reload apache2` — OPcache 갱신(무중단)
+6. `sudo -n systemctl reload apache2` — 아파치 리로드(무중단). OPcache 는 PHP-FPM 의 `opcache.validate_timestamps` 로 갱신된다
 
 > **spark migrate 함정**: DB 연결 실패·마이그레이션 예외가 나도 종료코드 0 을 반환한다. `set -e` 로 못 잡으므로 출력을 캡처해 예외 패턴(`[...Exception]`·`Unable to connect`·`Access denied`)을 직접 검사하고 실패 시 배포를 중단한다.
 

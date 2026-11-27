@@ -113,7 +113,7 @@ $userId = $this->authUserId();
 
 - 배포 정의는 `.github/workflows/deploy.yml`이며 `main` push와 `workflow_dispatch`(롤백·재배포용 `ref`)로 실행한다. 동시성 그룹은 `deploy-production`, `cancel-in-progress: false`다.
 - GitHub `production` 환경에는 `DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_SSH_KEY`, `DEPLOY_PORT`, `DEPLOY_PATH`가 필요하다. 서버 저장소 리모트는 읽기 전용 deploy key를 이용한 SSH여야 한다.
-- 대상은 Ubuntu + mod_php Apache 단일 서버다. Apache `DocumentRoot`는 `public/`이며, 배포 계정은 `systemctl reload apache2`를 비밀번호 없이 실행할 수 있어야 하고 `writable/`은 `www-data`가 쓸 수 있어야 한다.
+- 대상은 Ubuntu + Apache + PHP-FPM(`php8.5-fpm`) 단일 서버다. Apache `DocumentRoot`는 `public/`이며, 배포 계정은 `systemctl reload apache2`를 비밀번호 없이 실행할 수 있어야 하고 `writable/`은 `www-data`가 쓸 수 있어야 한다.
 - `writable/` 소유권 충돌 방지를 위해 `<DEPLOY_USER>:www-data` 그룹과 setgid 권한(`chmod -R 2775`)을 유지한다. 최초 배포 후 관리자 계정이 없으면 `php spark db:seed AdminUserSeeder`를 한 번 실행한다.
 - `feature/*`는 `gh pr merge <PR번호> --squash --delete-branch`로 병합·삭제한다. GitHub 저장소의 `delete_branch_on_merge`는 `false`로 유지해 `dev`가 자동 삭제되지 않게 한다.
 
