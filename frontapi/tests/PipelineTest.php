@@ -130,4 +130,40 @@ final class PipelineTest extends TestCase
         $this->assertSame(200, $app->handle($make())->getStatusCode());
         $this->assertSame(429, $app->handle($make())->getStatusCode()); // 한도 초과
     }
+
+    public function testSpoofedForwardedForCannotBypassRateLimit(): void
+    {
+        $factory = new Psr17Factory();
+        $app     = App::create($this->env(['RATE_LIMIT_ENABLED' => 'true', 'RATE_LIMIT_MAX' => '2']));
+        $token   = $this->token(['sub' => 1]);
+
+        // 신뢰 프록시가 아닌 peer 가 XFF 를 매번 바꿔도 같은 키로 집계된다
+        $make = static function (int $n) use ($factory, $token): ServerRequestInterface {
+            return $factory->createServerRequest('GET', '/api/v1/ping', ['REMOTE_ADDR' => '203.0.113.9'])
+                ->withHeader('X-Forwarded-For', '198.51.100.' . $n)
+                ->withHeader('Authorization', 'Bearer ' . $token);
+        };
+
+        $this->assertSame(200, $app->handle($make(1))->getStatusCode());
+        $this->assertSame(200, $app->handle($make(2))->getStatusCode());
+        $this->assertSame(429, $app->handle($make(3))->getStatusCode());
+    }
+
+    public function testForwardedForHonoredFromTrustedProxy(): void
+    {
+        $factory = new Psr17Factory();
+        $app     = App::create($this->env(['RATE_LIMIT_ENABLED' => 'true', 'RATE_LIMIT_MAX' => '1', 'TRUSTED_PROXIES' => '127.0.0.1']));
+        $token   = $this->token(['sub' => 1]);
+
+        $make = static function (string $client) use ($factory, $token): ServerRequestInterface {
+            return $factory->createServerRequest('GET', '/api/v1/ping', ['REMOTE_ADDR' => '127.0.0.1'])
+                ->withHeader('X-Forwarded-For', $client)
+                ->withHeader('Authorization', 'Bearer ' . $token);
+        };
+
+        // 신뢰 프록시 뒤의 서로 다른 실제 클라이언트는 각자 집계된다
+        $this->assertSame(200, $app->handle($make('198.51.100.1'))->getStatusCode());
+        $this->assertSame(200, $app->handle($make('198.51.100.2'))->getStatusCode());
+        $this->assertSame(429, $app->handle($make('198.51.100.1'))->getStatusCode());
+    }
 }

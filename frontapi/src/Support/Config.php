@@ -24,6 +24,8 @@ final readonly class Config
         public string $appEnv,
         public string $licensePublicKey,
         public string $rawLogPath,
+        /** @var list<string> X-Forwarded-For 를 해석해도 되는 신뢰 프록시(IP/CIDR) */
+        public array $trustedProxies = ['127.0.0.1', '::1'],
     ) {
     }
 
@@ -49,6 +51,10 @@ final readonly class Config
             appEnv: $get('APP_ENV', 'production'),
             licensePublicKey: $get('LICENSE_ED25519_PUBLIC_KEY'),
             rawLogPath: $get('RAW_LOG_PATH', __DIR__ . '/../../var/logs/raw'),
+            trustedProxies: array_values(array_filter(
+                array_map('trim', explode(',', $get('TRUSTED_PROXIES', '127.0.0.1,::1'))),
+                static fn (string $p): bool => $p !== '',
+            )),
         );
     }
 }

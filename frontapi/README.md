@@ -14,7 +14,7 @@ CI4 Admin 앱과 **별도 프로젝트**(별도 composer)이며, 같은 DB(`aili
 | DI | `php-di/php-di` |
 | DB | PDO (prepared statement 전용, raw query 금지) |
 | 인증 | AITessera JWT(HS256) 검증 — `JWT_SECRET` 공유 |
-| Rate Limit | Redis(`predis`) · 테스트는 인메모리 |
+| Rate Limit | Redis(`predis`) · 테스트는 인메모리 · Redis 장애 시 fail-open(의도, `RedisRateLimiter` 참고) · 클라이언트 IP 는 `TRUSTED_PROXIES` 에 속한 peer 의 `X-Forwarded-For` 만 해석 |
 | API 문서 | `zircote/swagger-php` + Swagger UI |
 
 ## 로컬 실행

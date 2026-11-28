@@ -224,4 +224,70 @@ final class FloatingApiTest extends TestCase
 
         $this->assertSame(401, $r['status']);
     }
+
+    public function testReactivationByTheSameHostUpdatesRowInsteadOfAccumulating(): void
+    {
+        for ($i = 0; $i < 3; $i++) {
+            $r = $this->call('/api/v1/floating/activation', ['license_key' => 'KEY-F1', 'host_id' => 'HOST-A']);
+            $this->assertTrue($r['body']['data']['activated']);
+        }
+
+        $rows = $this->pdo->query('SELECT COUNT(*) FROM floating_activations WHERE license_id = 1')->fetchColumn();
+        $this->assertSame(1, (int) $rows);
+    }
+
+    public function testOtherHostBlockedWhileActiveAndNoRowInserted(): void
+    {
+        $this->call('/api/v1/floating/activation', ['license_key' => 'KEY-F1', 'host_id' => 'HOST-A']);
+        $b = $this->call('/api/v1/floating/activation', ['license_key' => 'KEY-F1', 'host_id' => 'HOST-B']);
+
+        $this->assertSame('ALREADY_ACTIVE', $b['body']['data']['reason']);
+        $rows = $this->pdo->query('SELECT COUNT(*) FROM floating_activations WHERE license_id = 1')->fetchColumn();
+        $this->assertSame(1, (int) $rows);
+    }
+
+    public function testHostCanTakeOverAfterActivationExpires(): void
+    {
+        $this->call('/api/v1/floating/activation', ['license_key' => 'KEY-F1', 'host_id' => 'HOST-A']);
+        $this->pdo->exec("UPDATE floating_activations SET expires_at = '2000-01-01 00:00:00'");
+
+        $b = $this->call('/api/v1/floating/activation', ['license_key' => 'KEY-F1', 'host_id' => 'HOST-B']);
+        $this->assertTrue($b['body']['data']['activated']);
+    }
+
+    public function testInFlightStartsReserveCountLimit(): void
+    {
+        // 한도 3 — 종료 전이라도 시작된 분석이 한도를 점유하므로 4번째 시작은 거부된다
+        for ($i = 0; $i < 3; $i++) {
+            $s = $this->call('/api/v1/floating/analysis/start', ['license_key' => 'KEY-CNT', 'host_id' => 'H']);
+            $this->assertTrue($s['body']['data']['started']);
+        }
+
+        $fourth = $this->call('/api/v1/floating/analysis/start', ['license_key' => 'KEY-CNT', 'host_id' => 'H']);
+        $this->assertFalse($fourth['body']['data']['started']);
+        $this->assertSame('USAGE_EXCEEDED', $fourth['body']['data']['reason']);
+    }
+
+    public function testFailedAnalysisReleasesReservation(): void
+    {
+        $keys = [];
+        for ($i = 0; $i < 3; $i++) {
+            $keys[] = $this->call('/api/v1/floating/analysis/start', ['license_key' => 'KEY-CNT', 'host_id' => 'H'])['body']['data']['analysis_key'];
+        }
+        $this->call('/api/v1/floating/analysis/end', ['analysis_key' => $keys[0], 'success' => false]);
+
+        $again = $this->call('/api/v1/floating/analysis/start', ['license_key' => 'KEY-CNT', 'host_id' => 'H']);
+        $this->assertTrue($again['body']['data']['started']);
+    }
+
+    public function testStaleInFlightReservationExpires(): void
+    {
+        for ($i = 0; $i < 3; $i++) {
+            $this->call('/api/v1/floating/analysis/start', ['license_key' => 'KEY-CNT', 'host_id' => 'H']);
+        }
+        $this->pdo->exec("UPDATE analysis_logs SET created_at = '2000-01-01 00:00:00'");
+
+        $again = $this->call('/api/v1/floating/analysis/start', ['license_key' => 'KEY-CNT', 'host_id' => 'H']);
+        $this->assertTrue($again['body']['data']['started']);
+    }
 }
