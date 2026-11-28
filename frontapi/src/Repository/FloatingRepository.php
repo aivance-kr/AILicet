@@ -61,6 +61,79 @@ final class FloatingRepository
         return $row === false ? null : $row;
     }
 
+    /**
+     * 같은 호스트의 가장 최근 활성화 행(만료 여부 무관) — 재활성화 시 갱신 대상.
+     *
+     * @return array<string, mixed>|null
+     */
+    public function latestActivationByHost(int $licenseId, string $hostId): ?array
+    {
+        $stmt = $this->pdo()->prepare(
+            'SELECT * FROM floating_activations WHERE license_id = :id AND host_id = :host ORDER BY id DESC LIMIT 1',
+        );
+        $stmt->execute([':id' => $licenseId, ':host' => $hostId]);
+        $row = $stmt->fetch();
+
+        return $row === false ? null : $row;
+    }
+
+    /** 기존 활성화 행 갱신(동일 호스트 재활성화 — 행 누적 방지). */
+    public function renewActivation(int $id, string $activatedAt, string $expiresAt): void
+    {
+        $stmt = $this->pdo()->prepare(
+            'UPDATE floating_activations SET activated_at = :act, expires_at = :exp WHERE id = :id',
+        );
+        $stmt->execute([':act' => $activatedAt, ':exp' => $expiresAt, ':id' => $id]);
+    }
+
+    /**
+     * 라이선스 단위 락 — 같은 라이선스에 대한 활성화·분석 시작을 직렬화한다.
+     * 반드시 transactional() 안에서 호출한다(트랜잭션 종료 시 해제).
+     */
+    public function lockLicense(int $licenseId): void
+    {
+        $stmt = $this->pdo()->prepare('SELECT id FROM licenses WHERE id = :id FOR UPDATE');
+        $stmt->execute([':id' => $licenseId]);
+        $stmt->fetchColumn();
+    }
+
+    /**
+     * 트랜잭션 실행 — 예외 시 롤백 후 재던진다.
+     *
+     * @template T
+     *
+     * @param callable():T $fn
+     *
+     * @return T
+     */
+    public function transactional(callable $fn): mixed
+    {
+        $pdo = $this->pdo();
+        $pdo->beginTransaction();
+
+        try {
+            $result = $fn();
+            $pdo->commit();
+
+            return $result;
+        } catch (\Throwable $e) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+
+            throw $e;
+        }
+    }
+
+    /** 진행 중(started, since 이후) 분석 건수 — 카운트제 한도 예약용. */
+    public function inFlightCount(int $licenseId, string $since): int
+    {
+        $stmt = $this->pdo()->prepare("SELECT COUNT(*) FROM analysis_logs WHERE license_id = :id AND status = 'started' AND created_at >= :since");
+        $stmt->execute([':id' => $licenseId, ':since' => $since]);
+
+        return (int) $stmt->fetchColumn();
+    }
+
     public function insertActivation(int $licenseId, string $hostId, string $activatedAt, string $expiresAt): int
     {
         $stmt = $this->pdo()->prepare(

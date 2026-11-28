@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App;
 
+use App\Middleware\ClientIpMiddleware;
 use App\Middleware\ErrorHandlerMiddleware;
 use App\Middleware\JwtAuthMiddleware;
 use App\Middleware\RateLimitMiddleware;
@@ -45,6 +46,7 @@ final class App
     {
         $queue = [
             $this->container->get(ErrorHandlerMiddleware::class),
+            $this->container->get(ClientIpMiddleware::class),
             $this->container->get(RateLimitMiddleware::class),
             $this->container->get(JwtAuthMiddleware::class),
             $this->container->get(RoutingMiddleware::class),

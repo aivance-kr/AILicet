@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http;
 
+use App\Middleware\ClientIpMiddleware;
 use Psr\Http\Message\ServerRequestInterface;
 
 /**
@@ -25,11 +26,15 @@ final class Input
         return is_array($data) ? $data : [];
     }
 
+    /**
+     * 클라이언트 IP — ClientIpMiddleware 가 신뢰 프록시 규칙으로 해석한 값.
+     * 속성이 없으면(미들웨어 미경유) 헤더는 신뢰하지 않고 소켓 peer 만 쓴다.
+     */
     public static function clientIp(ServerRequestInterface $request): string
     {
-        $forwarded = $request->getHeaderLine('X-Forwarded-For');
-        if ($forwarded !== '') {
-            return trim(explode(',', $forwarded)[0]);
+        $ip = $request->getAttribute(ClientIpMiddleware::ATTRIBUTE);
+        if (is_string($ip) && $ip !== '') {
+            return $ip;
         }
 
         return (string) ($request->getServerParams()['REMOTE_ADDR'] ?? 'unknown');

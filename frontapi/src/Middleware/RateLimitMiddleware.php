@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Middleware;
 
 use App\Exception\RateLimitedException;
+use App\Http\Input;
 use App\Support\Config;
 use App\Support\RateLimiter;
 use Psr\Http\Message\ResponseInterface;
@@ -39,12 +40,6 @@ final class RateLimitMiddleware implements MiddlewareInterface
 
     private function clientIp(ServerRequestInterface $request): string
     {
-        $server = $request->getServerParams();
-        $forwarded = $request->getHeaderLine('X-Forwarded-For');
-        if ($forwarded !== '') {
-            return trim(explode(',', $forwarded)[0]);
-        }
-
-        return (string) ($server['REMOTE_ADDR'] ?? 'unknown');
+        return Input::clientIp($request);
     }
 }
